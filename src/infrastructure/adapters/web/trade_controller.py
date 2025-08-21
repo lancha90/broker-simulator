@@ -11,6 +11,9 @@ from src.infrastructure.adapters.persistence.supabase_balance_repository import 
 from src.infrastructure.adapters.persistence.supabase_stock_balance_repository import SupabaseStockBalanceRepository
 from src.infrastructure.adapters.persistence.supabase_trade_repository import SupabaseTradeRepository
 from src.infrastructure.middleware.auth import AuthMiddleware
+from src.infrastructure.config.logging_config import get_logger
+
+logger = get_logger(__name__)
 
 
 class TradeRequest(BaseModel):
@@ -56,6 +59,8 @@ async def execute_trade(
 ):
     user = await auth_middleware.authenticate(request)
     
+    logger.info(f"Trade request from user {user.id}: {trade_request.action} {trade_request.quantity} {trade_request.ticker} @ {trade_request.price}")
+    
     trade_type = TradeType.BUY if trade_request.action.lower() == "buy" else TradeType.SELL
     
     trade = await trade_service.execute_trade(
@@ -66,7 +71,7 @@ async def execute_trade(
         price=Decimal(str(trade_request.price))
     )
     
-    return TradeResponse(
+    response = TradeResponse(
         id=trade.id,
         user_id=trade.user_id,
         ticker=trade.ticker,
@@ -76,3 +81,6 @@ async def execute_trade(
         total_amount=float(trade.total_amount),
         timestamp=trade.created_at.isoformat() if trade.created_at else ""
     )
+    
+    logger.info(f"Trade executed for user {user.id}: ID={response.id}, total_amount={response.total_amount}")
+    return response

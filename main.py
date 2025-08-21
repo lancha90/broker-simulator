@@ -11,8 +11,10 @@ from src.infrastructure.adapters.web import (
     trade_controller
 )
 from src.infrastructure.config.settings import settings
+from src.infrastructure.config.logging_config import setup_logging
 
 load_dotenv()
+setup_logging()
 
 app = FastAPI(
     title="IBKR Broker Simulator",
