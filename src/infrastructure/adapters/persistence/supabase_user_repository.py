@@ -11,7 +11,7 @@ class SupabaseUserRepository(UserRepository):
 
     async def find_by_api_key(self, api_key: str) -> Optional[User]:
         try:
-            response = supabase.table(self.table_name).select("*").eq("api_key", api_key).execute()
+            response = (supabase.table(self.table_name).select("*").eq("api_key", api_key).execute())
             if response.data:
                 return User(**response.data[0])
             return None
