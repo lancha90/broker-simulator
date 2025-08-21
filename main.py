@@ -36,9 +36,12 @@ app.include_router(trade_controller.router, prefix="/api", tags=["Trade"])
 
 
 if __name__ == "__main__":
+    import os
+    is_development = os.getenv("ENVIRONMENT", "development") == "development"
+    
     uvicorn.run(
         "main:app",
         host=settings.host,
         port=settings.port,
-        reload=True
+        reload=is_development
     )
