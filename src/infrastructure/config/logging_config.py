@@ -4,7 +4,7 @@ import sys
 
 def setup_logging():
     """Setup simple logging configuration"""
-    log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+    log_level = os.getenv("LOG_LEVEL", "DEBUG").upper()
     
     # Clear existing handlers to avoid conflicts
     root_logger = logging.getLogger()
