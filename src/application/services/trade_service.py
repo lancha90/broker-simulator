@@ -1,3 +1,4 @@
+from datetime import datetime
 from decimal import Decimal
 from fastapi import HTTPException, status
 from src.application.services.balance_service import BalanceService
@@ -63,7 +64,8 @@ class TradeService:
             trade_type=trade_type,
             quantity=quantity,
             price=price,
-            total_amount=total_amount
+            total_amount=total_amount,
+            created_at=datetime.now()
         )
 
         return await self.trade_repository.create(trade)
@@ -85,6 +87,7 @@ class TradeService:
             existing_stock.quantity = new_quantity
             existing_stock.average_price = new_average_price
             existing_stock.current_price = price
+            existing_stock.updated_at = datetime.now()
             await self.stock_balance_repository.update(existing_stock)
         else:
             new_stock = StockBalance(
@@ -92,7 +95,9 @@ class TradeService:
                 ticker=ticker,
                 quantity=quantity,
                 average_price=price,
-                current_price=price
+                current_price=price,
+                created_at=datetime.now(),
+                updated_at=datetime.now()
             )
             await self.stock_balance_repository.create(new_stock)
 
