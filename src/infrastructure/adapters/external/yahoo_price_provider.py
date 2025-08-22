@@ -19,7 +19,7 @@ class YahooPriceProvider(PriceProvider):
                 url = f"{self.base_url}/{ticker}?interval=1d&range=1d"
                 logger.debug(f"Making request to Yahoo Finance: {url}")
 
-                response = await client.get(url, timeout=10.0)
+                response = await client.get(url, timeout=10.0, headers={"User-Agent": "Mozilla/5.0"})
                 response.raise_for_status()
                 logger.debug(f"Yahoo Finance response status: {response.status_code}")
                 

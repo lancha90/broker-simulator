@@ -21,7 +21,7 @@ class AlphavantageProvider(PriceProvider):
                     "symbol": ticker,
                     "apikey": self.api_key
                 }
-                response = await client.get(self.base_url, params=params, timeout=10.0)
+                response = await client.get(self.base_url, params=params, timeout=10.0, headers={"User-Agent": "Mozilla/5.0"})
                 response.raise_for_status()
                 
                 data = response.json()
