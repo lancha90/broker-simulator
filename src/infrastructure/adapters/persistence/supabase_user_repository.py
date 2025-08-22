@@ -21,6 +21,10 @@ class SupabaseUserRepository(UserRepository):
 
     async def create(self, user: User) -> User:
         user_dict = user.model_dump(exclude={"id"})
+        # Convert datetime to ISO string for JSON serialization
+        for field in ["created_at", "updated_at"]:
+            if field in user_dict and user_dict[field] is not None:
+                user_dict[field] = user_dict[field].isoformat()
         response = supabase.table(self.table_name).insert(user_dict).execute()
         return User(**response.data[0])
 

@@ -31,6 +31,10 @@ class SupabaseStockBalanceRepository(StockBalanceRepository):
             stock_balance_dict["quantity"] = float(stock_balance_dict["quantity"])
         if "average_price" in stock_balance_dict:
             stock_balance_dict["average_price"] = float(stock_balance_dict["average_price"])
+        # Convert datetime to ISO string for JSON serialization
+        for field in ["created_at", "updated_at"]:
+            if field in stock_balance_dict and stock_balance_dict[field] is not None:
+                stock_balance_dict[field] = stock_balance_dict[field].isoformat()
         response = supabase.table(self.table_name).insert(stock_balance_dict).execute()
         return StockBalance(**response.data[0])
 
@@ -41,6 +45,10 @@ class SupabaseStockBalanceRepository(StockBalanceRepository):
             stock_balance_dict["quantity"] = float(stock_balance_dict["quantity"])
         if "average_price" in stock_balance_dict:
             stock_balance_dict["average_price"] = float(stock_balance_dict["average_price"])
+        # Convert datetime to ISO string for JSON serialization
+        for field in ["updated_at"]:
+            if field in stock_balance_dict and stock_balance_dict[field] is not None:
+                stock_balance_dict[field] = stock_balance_dict[field].isoformat()
         response = supabase.table(self.table_name).update(stock_balance_dict).eq("id", stock_balance.id).execute()
         return StockBalance(**response.data[0])
 

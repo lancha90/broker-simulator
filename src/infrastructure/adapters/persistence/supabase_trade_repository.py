@@ -17,6 +17,10 @@ class SupabaseTradeRepository(TradeRepository):
             trade_dict["price"] = float(trade_dict["price"])
         if "total_amount" in trade_dict:
             trade_dict["total_amount"] = float(trade_dict["total_amount"])
+        # Convert datetime to ISO string for JSON serialization
+        for field in ["created_at"]:
+            if field in trade_dict and trade_dict[field] is not None:
+                trade_dict[field] = trade_dict[field].isoformat()
         response = supabase.table(self.table_name).insert(trade_dict).execute()
         return Trade(**response.data[0])
 

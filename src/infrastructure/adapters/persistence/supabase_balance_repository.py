@@ -22,6 +22,10 @@ class SupabaseBalanceRepository(BalanceRepository):
         # Convert Decimal to float for JSON serialization
         if "cash_balance" in balance_dict:
             balance_dict["cash_balance"] = float(balance_dict["cash_balance"])
+        # Convert datetime to ISO string for JSON serialization
+        for field in ["created_at", "updated_at"]:
+            if field in balance_dict and balance_dict[field] is not None:
+                balance_dict[field] = balance_dict[field].isoformat()
         response = supabase.table(self.table_name).insert(balance_dict).execute()
         return Balance(**response.data[0])
 
@@ -30,5 +34,9 @@ class SupabaseBalanceRepository(BalanceRepository):
         # Convert Decimal to float for JSON serialization
         if "cash_balance" in balance_dict:
             balance_dict["cash_balance"] = float(balance_dict["cash_balance"])
+        # Convert datetime to ISO string for JSON serialization
+        for field in ["updated_at"]:
+            if field in balance_dict and balance_dict[field] is not None:
+                balance_dict[field] = balance_dict[field].isoformat()
         response = supabase.table(self.table_name).update(balance_dict).eq("id", balance.id).execute()
         return Balance(**response.data[0])
