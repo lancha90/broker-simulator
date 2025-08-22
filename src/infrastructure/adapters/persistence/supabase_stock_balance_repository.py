@@ -26,11 +26,21 @@ class SupabaseStockBalanceRepository(StockBalanceRepository):
 
     async def create(self, stock_balance: StockBalance) -> StockBalance:
         stock_balance_dict = stock_balance.model_dump(exclude={"id"})
+        # Convert Decimal fields to float for JSON serialization
+        if "quantity" in stock_balance_dict:
+            stock_balance_dict["quantity"] = float(stock_balance_dict["quantity"])
+        if "average_price" in stock_balance_dict:
+            stock_balance_dict["average_price"] = float(stock_balance_dict["average_price"])
         response = supabase.table(self.table_name).insert(stock_balance_dict).execute()
         return StockBalance(**response.data[0])
 
     async def update(self, stock_balance: StockBalance) -> StockBalance:
         stock_balance_dict = stock_balance.model_dump(exclude={"id", "created_at"})
+        # Convert Decimal fields to float for JSON serialization
+        if "quantity" in stock_balance_dict:
+            stock_balance_dict["quantity"] = float(stock_balance_dict["quantity"])
+        if "average_price" in stock_balance_dict:
+            stock_balance_dict["average_price"] = float(stock_balance_dict["average_price"])
         response = supabase.table(self.table_name).update(stock_balance_dict).eq("id", stock_balance.id).execute()
         return StockBalance(**response.data[0])
 

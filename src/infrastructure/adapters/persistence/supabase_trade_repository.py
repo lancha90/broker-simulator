@@ -10,6 +10,13 @@ class SupabaseTradeRepository(TradeRepository):
 
     async def create(self, trade: Trade) -> Trade:
         trade_dict = trade.model_dump(exclude={"id"})
+        # Convert Decimal fields to float for JSON serialization
+        if "quantity" in trade_dict:
+            trade_dict["quantity"] = float(trade_dict["quantity"])
+        if "price" in trade_dict:
+            trade_dict["price"] = float(trade_dict["price"])
+        if "total_amount" in trade_dict:
+            trade_dict["total_amount"] = float(trade_dict["total_amount"])
         response = supabase.table(self.table_name).insert(trade_dict).execute()
         return Trade(**response.data[0])
 

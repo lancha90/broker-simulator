@@ -19,10 +19,16 @@ class SupabaseBalanceRepository(BalanceRepository):
 
     async def create(self, balance: Balance) -> Balance:
         balance_dict = balance.model_dump(exclude={"id"})
+        # Convert Decimal to float for JSON serialization
+        if "cash_balance" in balance_dict:
+            balance_dict["cash_balance"] = float(balance_dict["cash_balance"])
         response = supabase.table(self.table_name).insert(balance_dict).execute()
         return Balance(**response.data[0])
 
     async def update(self, balance: Balance) -> Balance:
         balance_dict = balance.model_dump(exclude={"id", "created_at"})
+        # Convert Decimal to float for JSON serialization
+        if "cash_balance" in balance_dict:
+            balance_dict["cash_balance"] = float(balance_dict["cash_balance"])
         response = supabase.table(self.table_name).update(balance_dict).eq("id", balance.id).execute()
         return Balance(**response.data[0])
