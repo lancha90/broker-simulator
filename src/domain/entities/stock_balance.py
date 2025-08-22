@@ -10,5 +10,6 @@ class StockBalance(BaseModel):
     ticker: str
     quantity: Decimal
     average_price: Decimal
+    current_price: Decimal
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

@@ -31,6 +31,8 @@ class SupabaseStockBalanceRepository(StockBalanceRepository):
             stock_balance_dict["quantity"] = float(stock_balance_dict["quantity"])
         if "average_price" in stock_balance_dict:
             stock_balance_dict["average_price"] = float(stock_balance_dict["average_price"])
+        if "current_price" in stock_balance_dict:
+            stock_balance_dict["current_price"] = float(stock_balance_dict["current_price"])
         # Convert datetime to ISO string for JSON serialization
         for field in ["created_at", "updated_at"]:
             if field in stock_balance_dict and stock_balance_dict[field] is not None:
@@ -45,6 +47,8 @@ class SupabaseStockBalanceRepository(StockBalanceRepository):
             stock_balance_dict["quantity"] = float(stock_balance_dict["quantity"])
         if "average_price" in stock_balance_dict:
             stock_balance_dict["average_price"] = float(stock_balance_dict["average_price"])
+        if "current_price" in stock_balance_dict:
+            stock_balance_dict["current_price"] = float(stock_balance_dict["current_price"])
         # Convert datetime to ISO string for JSON serialization
         for field in ["updated_at"]:
             if field in stock_balance_dict and stock_balance_dict[field] is not None:

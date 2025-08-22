@@ -84,13 +84,15 @@ class TradeService:
             new_average_price = ((existing_stock.quantity * existing_stock.average_price) + (quantity * price)) / new_quantity
             existing_stock.quantity = new_quantity
             existing_stock.average_price = new_average_price
+            existing_stock.current_price = price
             await self.stock_balance_repository.update(existing_stock)
         else:
             new_stock = StockBalance(
                 user_id=user_id,
                 ticker=ticker,
                 quantity=quantity,
-                average_price=price
+                average_price=price,
+                current_price=price
             )
             await self.stock_balance_repository.create(new_stock)
 
@@ -105,6 +107,8 @@ class TradeService:
         await self.balance_service.update_balance(user_id, total_amount)
 
         existing_stock.quantity -= quantity
+        existing_stock.current_price = price
+
         if existing_stock.quantity == 0:
             await self.stock_balance_repository.delete(existing_stock.id)
         else:
