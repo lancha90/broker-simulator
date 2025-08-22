@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     alphavantage_api_key: str = os.getenv("ALPHAVANTAGE_API_KEY", "")
     host: str = os.getenv("HOST", "0.0.0.0")
     port: int = int(os.getenv("PORT", "8000"))
+    environment: str = os.getenv("ENVIRONMENT", "development")
 
     class Config:
         env_file = ".env"

@@ -14,8 +14,8 @@ class AuthMiddleware:
 
     async def authenticate(self, request: Request) -> User:
         try:
-            logger.info(f"Authentication attempt for {request.url.path}")
-            
+            logger.info(f"Authentication attempt for {request.url.path}" )
+
             authorization = request.headers.get("Authorization")
             if not authorization:
                 logger.warning("Authorization header missing")

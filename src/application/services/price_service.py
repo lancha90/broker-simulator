@@ -26,17 +26,18 @@ class PriceService:
             return StockPrice(**cached_price)
 
         logger.info(f"Cache miss for {ticker}, fetching from external provider")
-        price = await self.price_provider.get_price(ticker)
+        result = await self.price_provider.get_price(ticker)
         
-        if price:
+        if result:
+            price, source = result
             stock_price = StockPrice(
                 ticker=ticker,
                 price=price,
-                source="external",
+                source=source,
                 timestamp=datetime.now()
             )
             await self.cache.set(cache_key, stock_price.model_dump(), self.cache_ttl)
-            logger.info(f"Price cached for {ticker}: {price} (TTL: {self.cache_ttl}s)")
+            logger.info(f"Price cached for {ticker}: {price} from {source} (TTL: {self.cache_ttl}s)")
             return stock_price
         
         logger.warning(f"Unable to fetch price for ticker: {ticker}")

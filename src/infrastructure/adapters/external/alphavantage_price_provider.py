@@ -1,6 +1,6 @@
 import httpx
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Tuple
 from src.application.ports.price_provider import PriceProvider
 from src.infrastructure.config.settings import settings
 
@@ -10,7 +10,7 @@ class AlphavantageProvider(PriceProvider):
         self.base_url = "https://www.alphavantage.co/query"
         self.api_key = settings.alphavantage_api_key
 
-    async def get_price(self, ticker: str) -> Optional[Decimal]:
+    async def get_price(self, ticker: str) -> Optional[Tuple[Decimal, str]]:
         try:
             if not self.api_key:
                 return None
@@ -28,7 +28,7 @@ class AlphavantageProvider(PriceProvider):
                 price = data.get("Global Quote", {}).get("05. price")
                 
                 if price is not None:
-                    return Decimal(str(price))
+                    return (Decimal(str(price)), "alphavantage")
                 return None
         except Exception:
             return None

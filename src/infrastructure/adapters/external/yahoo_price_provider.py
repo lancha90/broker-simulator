@@ -1,6 +1,6 @@
 import httpx
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Tuple
 from src.application.ports.price_provider import PriceProvider
 from src.infrastructure.config.logging_config import get_logger
 
@@ -11,7 +11,7 @@ class YahooPriceProvider(PriceProvider):
     def __init__(self):
         self.base_url = "https://query1.finance.yahoo.com/v8/finance/chart"
 
-    async def get_price(self, ticker: str) -> Optional[Decimal]:
+    async def get_price(self, ticker: str) -> Optional[Tuple[Decimal, str]]:
         logger.info(f"Fetching price from Yahoo Finance for {ticker}")
         
         try:
@@ -28,7 +28,7 @@ class YahooPriceProvider(PriceProvider):
                 
                 if price is not None:
                     logger.info(f"Yahoo Finance returned price for {ticker}: {price}")
-                    return Decimal(str(price))
+                    return (Decimal(str(price)), "yahoo_finance")
                 else:
                     logger.warning(f"Yahoo Finance returned no price data for {ticker}")
                     return None

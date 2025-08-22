@@ -31,11 +31,12 @@ async def get_price(
     request: Request,
     price_service: PriceService = Depends(get_price_service)
 ):
-    logger.info(f"Price request for ticker: {ticker}")
-    
+    user = await auth_middleware.authenticate(request)
+    logger.info(f"Price request from user {user.id} for ticker: {ticker}")
+
     stock_price = await price_service.get_current_price(ticker.upper())
     if not stock_price:
-        logger.warning(f"Price not found for ticker {ticker}")
+        logger.warning(f"Price not found for ticker {ticker} requested by user {user.id}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Price not found for ticker: {ticker}"
@@ -47,6 +48,6 @@ async def get_price(
         source=stock_price.source,
         timestamp=stock_price.timestamp.isoformat()
     )
-    
-    logger.info(f"Price response: {ticker}=${response.price} (source: {response.source})")
+
+    logger.info(f"Price response for user {user.id}: {ticker}=${response.price} (source: {response.source})")
     return response

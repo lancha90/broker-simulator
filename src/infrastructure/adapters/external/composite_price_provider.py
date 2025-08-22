@@ -1,5 +1,5 @@
 from decimal import Decimal
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from src.application.ports.price_provider import PriceProvider
 from src.infrastructure.adapters.external.yahoo_price_provider import YahooPriceProvider
 from src.infrastructure.adapters.external.alphavantage_price_provider import AlphavantageProvider
@@ -15,17 +15,18 @@ class CompositePriceProvider(PriceProvider):
             AlphavantageProvider()
         ]
 
-    async def get_price(self, ticker: str) -> Optional[Decimal]:
+    async def get_price(self, ticker: str) -> Optional[Tuple[Decimal, str]]:
         logger.info(f"Attempting to get price for {ticker} using fallback chain")
         
         for i, provider in enumerate(self.providers):
             provider_name = provider.__class__.__name__
             try:
                 logger.info(f"Trying provider {i+1}/{len(self.providers)}: {provider_name} for {ticker}")
-                price = await provider.get_price(ticker)
-                if price is not None:
-                    logger.info(f"Price found for {ticker}: {price} (provider: {provider_name})")
-                    return price
+                result = await provider.get_price(ticker)
+                if result is not None:
+                    price, source = result
+                    logger.info(f"Price found for {ticker}: {price} (provider: {provider_name}, source: {source})")
+                    return result
                 else:
                     logger.warning(f"Provider {provider_name} returned None for {ticker}")
             except Exception as e:
