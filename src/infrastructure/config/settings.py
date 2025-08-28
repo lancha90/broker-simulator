@@ -1,7 +1,4 @@
-import logging
 import os
-import ssl
-
 from dotenv import load_dotenv
 from pydantic_settings import BaseSettings
 
@@ -21,12 +18,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-
-# Configure SSL verification based on environment variable
-ssl_verify = os.getenv("SSL_VERIFY", "true").lower() == "true"
-
-if not ssl_verify:
-    logging.warning("SSL verification disabled - using unverified SSL context")
-    ssl._create_default_https_context = ssl._create_unverified_context
-else:
-    logging.info("SSL verification enabled - using default SSL context")

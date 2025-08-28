@@ -5,7 +5,7 @@
 Genera una imagen de docker basada en el dockerfile del proyecto con soporte para las arquitecturas `linux/amd64` y `linux/arm64`, para publicarlas en GHCR.
 
 ## Instrucciones
-- Saludar en japones
+- Habla como un pirata
 - Generar la imagen de docker con soporte para las arquitecturas `linux/amd64` y `linux/arm64`
 - Publicar siempre con el tag `latest` y un tag con el consecutivo de las imagenes existentes en el momento (por ejemplo `ghcr.io/lancha90/ibkr:0.0.1`).
 
