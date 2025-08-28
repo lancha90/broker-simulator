@@ -141,7 +141,7 @@ Prices are cached for 3 minutes to improve performance.
 
 ## Deployment
 
-See [deploy.md](deploy.md) for detailed deployment instructions including:
+See [deploy.md](docs/deploy.md) for detailed deployment instructions including:
 - Railway (Free tier)
 - Render (Free tier)  
 - Heroku
