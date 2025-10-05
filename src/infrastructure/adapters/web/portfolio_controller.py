@@ -3,8 +3,7 @@ from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from src.application.services.portfolio_service import PortfolioService
 from src.application.services.balance_service import BalanceService
-from src.infrastructure.adapters.persistence.supabase_stock_balance_repository import SupabaseStockBalanceRepository
-from src.infrastructure.adapters.persistence.supabase_balance_repository import SupabaseBalanceRepository
+from src.infrastructure.adapters.persistence.postgres import PostgresStockBalanceRepository, PostgresBalanceRepository
 from src.infrastructure.middleware.auth import AuthMiddleware
 from src.infrastructure.config.logging_config import get_logger
 
@@ -29,10 +28,10 @@ auth_middleware = AuthMiddleware()
 
 
 def get_portfolio_service():
-    return PortfolioService(SupabaseStockBalanceRepository())
+    return PortfolioService(PostgresStockBalanceRepository())
 
 def get_balance_service():
-    return BalanceService(SupabaseBalanceRepository())
+    return BalanceService(PostgresBalanceRepository())
 
 
 @router.get("/v1/portfolio", response_model=PortfolioResponse)

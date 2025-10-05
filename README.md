@@ -24,25 +24,43 @@ Built using **Hexagonal Architecture** for clean separation of concerns:
 ### 1. Prerequisites
 
 - Python 3.8+
-- Supabase account
+- PostgreSQL database (Supabase or local PostgreSQL)
 - AlphaVantage API key (optional)
 
 ### 2. Database Setup
 
+#### Option A: Using Supabase (Recommended for quick start)
+
 1. Create a Supabase project
 2. Run the SQL script from `database_setup.sql` in your Supabase SQL editor
+
+#### Option B: Using PostgreSQL with Alembic Migrations
+
+1. Install PostgreSQL locally or use a cloud provider
+2. Create a new database
+3. Configure `DATABASE_URL` in `.env` (see step 3)
+4. Run migrations:
+```bash
+alembic upgrade head
+```
 
 ### 3. Environment Configuration
 
 ```bash
-cp .env .env
+cp .env.example .env
 ```
 
 Edit `.env` with your configuration:
 ```env
+# For Supabase (Legacy support)
 SUPABASE_URL=your_supabase_project_url
 SUPABASE_KEY=your_supabase_anon_key
-ALPHAVANTAGE_API_KEY=your_alphavantage_api_key  # Optional
+
+# For direct PostgreSQL connection (Recommended)
+DATABASE_URL=postgresql://user:password@localhost:5432/database_name
+
+# Optional configurations
+ALPHAVANTAGE_API_KEY=your_alphavantage_api_key
 PORT=8000
 HOST=0.0.0.0
 ```
@@ -52,6 +70,9 @@ HOST=0.0.0.0
 ```bash
 # Install dependencies
 pip install -r requirements.txt
+
+# Run database migrations (if using PostgreSQL)
+alembic upgrade head
 
 # Start the server
 python main.py
@@ -134,10 +155,37 @@ Prices are cached for 3 minutes to improve performance.
 
 ## Database Schema
 
-- **users**: User accounts with API keys
-- **balances**: Cash balances per user
-- **stock_balances**: Stock holdings per user/ticker
-- **trades**: Complete trading history
+### Tables
+
+- **ibkr_users**: User accounts with API keys (unique constraints on email and api_key)
+- **ibkr_balances**: Cash balances per user
+- **ibkr_stock_balances**: Stock holdings per user/ticker (unique constraint on user_id + ticker)
+- **ibkr_trades**: Complete trading history with audit trail
+
+### Migrations
+
+The project uses **Alembic** for database migrations. All migrations are located in `alembic/versions/`.
+
+**Available migrations:**
+1. `create_ibkr_balances_table` - Cash balance tracking
+2. `create_ibkr_users_table` - User accounts and authentication
+3. `create_ibkr_stock_balances_table` - Stock holdings with foreign key to users
+4. `create_ibkr_trades_table` - Trade history with foreign key to users
+
+**Migration commands:**
+```bash
+# Apply all pending migrations
+alembic upgrade head
+
+# Rollback one migration
+alembic downgrade -1
+
+# View migration history
+alembic history
+
+# Create a new migration
+alembic revision -m "description"
+```
 
 ## Deployment
 
@@ -151,17 +199,50 @@ See [deploy.md](docs/deploy.md) for detailed deployment instructions including:
 ### Project Structure
 ```
 src/
-├── application/     # Business logic
-├── domain/         # Core entities
-└── infrastructure/ # External adapters
+├── application/           # Business logic
+│   ├── services/         # Application services
+│   └── ports/           # Port interfaces
+├── domain/               # Core entities
+│   ├── entities/        # Domain models
+│   └── repositories/    # Repository interfaces
+└── infrastructure/       # External adapters
+    ├── adapters/
+    │   ├── persistence/
+    │   │   ├── postgres/    # PostgreSQL repositories (asyncpg)
+    │   │   └── supabase/    # Supabase repositories (legacy)
+    │   ├── pricing/         # Price data providers
+    │   └── web/             # HTTP controllers
+    ├── config/              # Configuration
+    └── middleware/          # Cross-cutting concerns
+
+alembic/
+├── versions/            # Database migrations
+└── env.py              # Alembic configuration
 ```
+
+### Database Repository Implementations
+
+The project supports two database adapters:
+
+1. **PostgreSQL (Recommended)** - Direct connection using `asyncpg`
+   - `PostgresBalanceRepository`
+   - `PostgresUserRepository`
+   - `PostgresStockBalanceRepository`
+   - `PostgresTradeRepository`
+
+2. **Supabase (Legacy)** - Using Supabase client
+   - `SupabaseBalanceRepository`
+   - `SupabaseUserRepository`
+   - `SupabaseStockBalanceRepository`
+   - `SupabaseTradeRepository`
 
 ### Adding New Features
 1. Define domain entities in `src/domain/entities/`
 2. Create repository interfaces in `src/domain/repositories/`
-3. Implement services in `src/application/services/`
-4. Add infrastructure adapters as needed
-5. Create web controllers in `src/infrastructure/adapters/web/`
+3. Implement repository adapters in `src/infrastructure/adapters/persistence/postgres/`
+4. Create Alembic migration: `alembic revision -m "description"`
+5. Implement services in `src/application/services/`
+6. Create web controllers in `src/infrastructure/adapters/web/`
 
 ## Contributing
 

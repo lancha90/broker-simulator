@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from src.domain.entities.user import User
-from src.infrastructure.adapters.persistence.supabase_user_repository import SupabaseUserRepository
+from src.infrastructure.adapters.persistence.postgres import PostgresUserRepository
 from src.infrastructure.config.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -9,7 +9,7 @@ logger = get_logger(__name__)
 
 class AuthMiddleware:
     def __init__(self):
-        self.user_repository = SupabaseUserRepository()
+        self.user_repository = PostgresUserRepository()
         self.bearer = HTTPBearer()
 
     async def authenticate(self, request: Request) -> User:

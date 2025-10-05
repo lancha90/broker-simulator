@@ -25,7 +25,8 @@ src/
 ## Technology Stack
 
 - **Framework**: FastAPI
-- **Database**: Supabase (PostgreSQL)
+- **Database**: PostgreSQL (asyncpg) / Supabase (legacy support)
+- **Migrations**: Alembic
 - **Cache**: In-memory (with interface for future Redis integration)
 - **Price Data**: Yahoo Finance API (primary), AlphaVantage (fallback)
 - **Authentication**: API Key-based
@@ -48,7 +49,16 @@ src/
 ### External Adapters
 - `CompositePriceProvider`: Fallback chain for price data
 - `MemoryCache`: Local caching with TTL support
-- `SupabaseRepositories`: Database persistence
+- `PostgresRepositories`: Direct PostgreSQL persistence (asyncpg) - **Recommended**
+  - `PostgresBalanceRepository`
+  - `PostgresUserRepository`
+  - `PostgresStockBalanceRepository`
+  - `PostgresTradeRepository`
+- `SupabaseRepositories`: Database persistence via Supabase client - **Legacy**
+  - `SupabaseBalanceRepository`
+  - `SupabaseUserRepository`
+  - `SupabaseStockBalanceRepository`
+  - `SupabaseTradeRepository`
 
 ## API Endpoints
 
@@ -62,16 +72,88 @@ All endpoints require `Authorization: Bearer <api_key>` header except health che
 
 ## Database Schema
 
-Tables: `ibkr_users`, `ibkr_balances`, `ibkr_stock_balances`, `ibkr_trades`
-- All tables use UUID primary keys
-- Foreign key relationships to ibkr_users table
-- Automatic timestamp management
+### Tables
+
+**ibkr_users**
+- `id` (String, PK): UUID primary key
+- `email` (String, Unique): User email address
+- `api_key` (String, Unique): API authentication key
+- `created_at` (Timestamp): Creation timestamp
+- `updated_at` (Timestamp): Last update timestamp
+- **Indexes**: Unique on `api_key`, Unique on `email`
+
+**ibkr_balances**
+- `id` (String, PK): UUID primary key
+- `user_id` (String): Foreign key to ibkr_users
+- `cash_balance` (Numeric 15,2): Cash balance amount
+- `created_at` (Timestamp): Creation timestamp
+- `updated_at` (Timestamp): Last update timestamp
+- **Indexes**: Index on `user_id`
+
+**ibkr_stock_balances**
+- `id` (String, PK): UUID primary key
+- `user_id` (String, FK): Foreign key to ibkr_users (CASCADE DELETE)
+- `ticker` (String): Stock ticker symbol
+- `quantity` (Numeric 15,4): Number of shares
+- `average_price` (Numeric 15,2): Average purchase price
+- `current_price` (Numeric 15,2): Current market price
+- `created_at` (Timestamp): Creation timestamp
+- `updated_at` (Timestamp): Last update timestamp
+- **Indexes**: Index on `user_id`, Unique on `(user_id, ticker)`
+
+**ibkr_trades**
+- `id` (String, PK): UUID primary key
+- `user_id` (String, FK): Foreign key to ibkr_users (CASCADE DELETE)
+- `ticker` (String): Stock ticker symbol
+- `trade_type` (String): "buy" or "sell"
+- `quantity` (Numeric 15,4): Number of shares traded
+- `price` (Numeric 15,2): Trade execution price
+- `total_amount` (Numeric 15,2): Total transaction amount
+- `created_at` (Timestamp): Trade timestamp
+- **Indexes**: Index on `user_id`, Index on `created_at`
+
+### Database Migrations (Alembic)
+
+The project uses Alembic for schema versioning and migrations.
+
+**Configuration:**
+- `alembic.ini`: Alembic configuration file
+- `alembic/env.py`: Environment configuration (reads `DATABASE_URL` from settings)
+- `alembic/versions/`: Migration files
+
+**Migration Files:**
+1. `55c37baaa218_create_ibkr_balances_table.py` - Creates ibkr_balances table
+2. `33a24868dd4a_create_ibkr_users_table.py` - Creates ibkr_users table with unique constraints
+3. `f6c063e31254_create_ibkr_stock_balances_table.py` - Creates ibkr_stock_balances with FK to users
+4. `fe94ecebcec0_create_ibkr_trades_table.py` - Creates ibkr_trades with FK to users
+
+**Migration Order:**
+balances → users → stock_balances → trades
+
+### Database Connection
+
+**PostgreSQL (Recommended):**
+- Connection pool using `asyncpg`
+- Pool configuration: min_size=2, max_size=10, timeout=60s
+- Connection string: `postgresql://user:password@host:port/database`
+- Configuration: `src/infrastructure/config/postgres_database.py`
+
+**Supabase (Legacy):**
+- Supabase Python client
+- Configuration: `src/infrastructure/config/database.py`
 
 ## Development Commands
 
 ```bash
 # Install dependencies
 pip install -r requirements.txt
+
+# Database migrations
+alembic upgrade head              # Apply all pending migrations
+alembic downgrade -1              # Rollback one migration
+alembic history                   # View migration history
+alembic revision -m "description" # Create new migration
+alembic current                   # Show current migration version
 
 # Run development server
 python main.py
@@ -82,20 +164,46 @@ python main.py
 
 ## Environment Variables
 
-Required:
-- `SUPABASE_URL`: Supabase project URL
-- `SUPABASE_KEY`: Supabase anon key
+**Database Configuration (choose one):**
+- `DATABASE_URL`: PostgreSQL connection string (Recommended)
+  - Format: `postgresql://user:password@host:port/database`
+  - Example: `postgresql://postgres:mypass@localhost:5432/ibkr_simulator`
+- `SUPABASE_URL` + `SUPABASE_KEY`: Supabase project credentials (Legacy)
 
-Optional:
+**Optional:**
 - `ALPHAVANTAGE_API_KEY`: For price data fallback
 - `PORT`: Server port (default: 8000)
 - `HOST`: Server host (default: 0.0.0.0)
+- `ENVIRONMENT`: Environment name (default: development)
 
 ## Testing
 
-Use the sample user created in database setup:
+**Creating Test Users:**
+
+If using **Supabase**, use the sample user from `database_setup.sql`:
 - Email: `test@example.com`
 - API Key: `test-api-key-123`
+
+If using **PostgreSQL with Alembic**, create a test user manually:
+```sql
+INSERT INTO ibkr_users (id, email, api_key, created_at, updated_at)
+VALUES (
+    gen_random_uuid()::text,
+    'test@example.com',
+    'test-api-key-123',
+    now(),
+    now()
+);
+
+INSERT INTO ibkr_balances (id, user_id, cash_balance, created_at, updated_at)
+VALUES (
+    gen_random_uuid()::text,
+    (SELECT id FROM ibkr_users WHERE email = 'test@example.com'),
+    10000.00,
+    now(),
+    now()
+);
+```
 
 ## Price Data Sources
 

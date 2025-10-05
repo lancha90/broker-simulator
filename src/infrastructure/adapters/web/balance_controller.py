@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel
 from src.application.services.balance_service import BalanceService
-from src.domain.entities.user import User
-from src.infrastructure.adapters.persistence.supabase_balance_repository import SupabaseBalanceRepository
+from src.infrastructure.adapters.persistence.postgres import PostgresBalanceRepository
 from src.infrastructure.middleware.auth import AuthMiddleware
 from src.infrastructure.config.logging_config import get_logger
 
@@ -19,7 +18,7 @@ auth_middleware = AuthMiddleware()
 
 
 def get_balance_service():
-    return BalanceService(SupabaseBalanceRepository())
+    return BalanceService(PostgresBalanceRepository())
 
 
 @router.get("/v1/balance", response_model=BalanceResponse)

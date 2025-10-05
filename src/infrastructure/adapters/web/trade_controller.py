@@ -7,9 +7,8 @@ from src.application.services.trade_service import TradeService
 from src.domain.entities.trade import TradeType
 from src.infrastructure.adapters.external.composite_price_provider import CompositePriceProvider
 from src.infrastructure.adapters.external.memory_cache import MemoryCache
-from src.infrastructure.adapters.persistence.supabase_balance_repository import SupabaseBalanceRepository
-from src.infrastructure.adapters.persistence.supabase_stock_balance_repository import SupabaseStockBalanceRepository
-from src.infrastructure.adapters.persistence.supabase_trade_repository import SupabaseTradeRepository
+from src.infrastructure.adapters.persistence.postgres import PostgresStockBalanceRepository, PostgresTradeRepository, \
+    PostgresBalanceRepository
 from src.infrastructure.middleware.auth import AuthMiddleware
 from src.infrastructure.config.logging_config import get_logger
 
@@ -40,16 +39,15 @@ cache = MemoryCache()
 
 
 def get_trade_service():
-    balance_service = BalanceService(SupabaseBalanceRepository())
+    balance_service = BalanceService(PostgresBalanceRepository())
     price_service = PriceService(CompositePriceProvider(), cache)
     
     return TradeService(
-        SupabaseTradeRepository(),
-        SupabaseStockBalanceRepository(),
+        PostgresTradeRepository(),
+        PostgresStockBalanceRepository(),
         balance_service,
         price_service
     )
-
 
 @router.post("/v1/trade", response_model=TradeResponse)
 async def execute_trade(
